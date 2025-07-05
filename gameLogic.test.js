@@ -8,12 +8,20 @@ import { db } from './database.js';
 // 타이머 모킹 활성화 (setTimeout이 테스트를 멈추지 않도록)
 mock.timers.enable();
 
-// DB 의존성 모킹
+/**
+ * @function mock.method(db, 'userExists')
+ * @description `db.userExists` 함수를 모킹하여 특정 userId에 대해 `true`를 반환하도록 설정합니다.
+ * @param {string} userId - 확인할 사용자 ID
+ * @returns {boolean} - `userId`가 'existing_user'일 경우 `true`를 반환합니다.
+ */
 mock.method(db, 'userExists', (userId) => {
   return userId === 'existing_user';
 });
 
-// 각 테스트가 끝난 후 상태 초기화
+/**
+ * @function afterEach
+ * @description 각 테스트가 끝난 후 게임 로직의 사용자 데이터를 초기화합니다.
+ */
 afterEach(() => {
   gameLogic._debugUsers().clear();
 });
@@ -21,12 +29,20 @@ afterEach(() => {
 
 // 2. 모든 테스트 케이스를 중첩 없이 단순하게 나열합니다.
 
+/**
+ * @function test
+ * @description 게임이 정상적으로 시작되는지 테스트합니다.
+ */
 test('게임이 정상적으로 시작되어야 한다', () => {
   const { gameStartTime, gameEnded } = gameLogic.startGame();
   assert.strictEqual(typeof gameStartTime, 'bigint', '게임 시작 시간은 BigInt 타입이어야 합니다.');
   assert.strictEqual(gameEnded, false, '게임은 시작 직후 종료 상태가 아니어야 합니다.');
 });
 
+/**
+ * @function test
+ * @description 등록된 사용자가 성공적으로 초기화되는지 테스트합니다.
+ */
 test('등록된 사용자는 성공적으로 초기화되어야 한다', () => {
   const result = gameLogic.initializeUser('existing_user');
   assert.strictEqual(result, true, '등록된 사용자의 초기화는 성공(true)해야 합니다.');
@@ -38,6 +54,10 @@ test('등록된 사용자는 성공적으로 초기화되어야 한다', () => {
   assert.strictEqual(user.disqualified, false, '초기화된 사용자는 실격 상태가 아니어야 합니다.');
 });
 
+/**
+ * @function test
+ * @description 등록되지 않은 사용자가 초기화에 실패하는지 테스트합니다.
+ */
 test('등록되지 않은 사용자는 초기화에 실패해야 한다', () => {
   const result = gameLogic.initializeUser('unregistered_user');
   assert.strictEqual(result, false, '미등록 사용자의 초기화는 실패(false)해야 합니다.');
@@ -46,6 +66,10 @@ test('등록되지 않은 사용자는 초기화에 실패해야 한다', () => 
   assert.strictEqual(users.has('unregistered_user'), false, '미등록 사용자는 맵에 추가되지 않아야 합니다.');
 });
 
+/**
+ * @function test
+ * @description 10초 이상 무응답 시 사용자가 실격 처리되는지 테스트합니다.
+ */
 test('10초 이상 무응답 시 실격 처리되어야 한다', () => {
   // Arrange: 테스트 준비
   const userId = 'existing_user'; // 1. 모킹된 ID 사용
@@ -73,6 +97,10 @@ test('10초 이상 무응답 시 실격 처리되어야 한다', () => {
   assert.strictEqual(user.disqualified, true, '10초 무응답 후 사용자는 실격 상태가 되어야 합니다.');
 });
 
+/**
+ * @function test
+ * @description 슬라이딩 윈도우 내 초당 클릭 제한(4회 초과) 시 사용자가 실격 처리되는지 테스트합니다.
+ */
 test('슬라이딩 윈도우 내 초당 클릭 제한(4회 초과) 시 실격 처리되어야 한다', () => {
   // Arrange: 테스트 준비
   const userId = 'existing_user';
@@ -110,6 +138,10 @@ test('슬라이딩 윈도우 내 초당 클릭 제한(4회 초과) 시 실격 �
 
 
 
+/**
+ * @function test
+ * @description 우승자 선정 로직이 정확히 동작하는지 테스트합니다.
+ */
 test('우승자 선정 로직이 정확히 동작해야 한다', () => {
   // Arrange: 테스트에 사용할 가상 사용자 데이터를 별도의 Map으로 생성
   const mockUsers = new Map();

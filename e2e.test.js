@@ -10,6 +10,12 @@ import path from "node:path";
 
 // --- 헬퍼 함수 정의 ---
 
+/**
+ * @function wait
+ * @description 주어진 시간(ms) 동안 대기하는 비동기 함수입니다.
+ * @param {number} ms - 대기할 시간 (밀리초)
+ * @returns {Promise<void>}
+ */
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -20,6 +26,10 @@ let serverProcess;
 const E2E_USER_ID = "e2e_user";
 const DB_FILE = path.join(process.cwd(), 'clickgame.db');
 
+/**
+ * @function before
+ * @description 각 테스트 실행 전에 호출되는 훅입니다. 데이터베이스 파일을 삭제하고 서버 프로세스를 시작합니다.
+ */
 before(() => {
   try {
     if (fs.existsSync(DB_FILE)) {
@@ -74,6 +84,10 @@ before(() => {
   });
 });
 
+/**
+ * @function after
+ * @description 각 테스트 실행 후에 호출되는 훅입니다. 서버 프로세스를 종료합니다.
+ */
 after(() => {
   if (serverProcess) {
     serverProcess.kill("SIGINT");
@@ -83,6 +97,12 @@ after(() => {
 
 // --- 메인 E2E 테스트 케이스 ---
 
+/**
+ * @function test
+ * @description 전체 게임 시나리오에 대한 E2E 테스트를 수행합니다.
+ *              회원가입, 클릭 전송, 게임 종료 대기, 우승자 확인의 단계를 포함합니다.
+ * @param {object} t - 테스트 컨텍스트 객체
+ */
 test("전체 게임 시나리오 E2E 테스트", async (t) => {
   // 테스트 타임아웃을 90초로 넉넉하게 설정
   t.timeout = 90000;

@@ -7,6 +7,14 @@ const pendingRequests = new Map();
 
 // 마스터 프로세스로부터 오는 메시지를 처리
 process.on('message', (msg) => {
+  /**
+   * @function process.on('message')
+   * @description 마스터 프로세스로부터 메시지를 수신하여 처리합니다. 특히 클릭 처리 결과를 받아 클라이언트 소켓에 응답을 보냅니다.
+   * @param {object} msg - 수신된 메시지 객체
+   * @param {string} msg.type - 메시지 타입 (예: 'clickResult')
+   * @param {string} msg.requestId - 요청 ID
+   * @param {boolean} msg.success - 클릭 처리 성공 여부
+   */
   if (msg.type === 'clickResult') {
     const { requestId, success } = msg;
     const socket = pendingRequests.get(requestId);
@@ -19,10 +27,21 @@ process.on('message', (msg) => {
   }
 });
 
+/**
+ * @function startTcpServer
+ * @description TCP 서버를 시작하고 지정된 포트에서 클라이언트 연결을 수신 대기합니다.
+ *              클라이언트로부터 클릭 데이터를 받아 마스터 프로세스로 전달하고, 마스터의 응답을 클라이언트에 다시 보냅니다.
+ */
 export function startTcpServer() {
   const TCP_PORT = 3001;
 
   const server = net.createServer((socket) => {
+    /**
+     * @function net.createServer callback
+     * @description 새로운 TCP 클라이언트 연결이 수립될 때마다 호출되는 콜백 함수입니다.
+     *              클라이언트로부터 데이터를 수신하고, 오류를 처리합니다.
+     * @param {net.Socket} socket - 클라이언트 소켓 객체
+     */
     socket.on('data', (data) => {
       try {
         const clickData = JSON.parse(data.toString().trim());

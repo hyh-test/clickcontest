@@ -13,6 +13,12 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
+/**
+ * @function checkUserRegistration
+ * @description 주어진 userId가 데이터베이스에 등록되어 있는지 확인합니다.
+ * @param {string} userId - 확인할 사용자의 ID
+ * @returns {Promise<boolean>} - 사용자가 등록되어 있으면 true, 그렇지 않으면 false
+ */
 async function checkUserRegistration(userId) {
   let db;
   try {
@@ -30,6 +36,11 @@ async function checkUserRegistration(userId) {
   }
 }
 
+/**
+ * @function sendClickToTcpServer
+ * @description TCP 서버로 사용자 클릭 데이터를 전송합니다.
+ * @param {string} userId - 클릭을 전송할 사용자의 ID
+ */
 function sendClickToTcpServer(userId) {
   const client = new net.Socket();
 
@@ -69,6 +80,10 @@ function sendClickToTcpServer(userId) {
   });
 }
 
+/**
+ * @function main
+ * @description TCP 클라이언트의 메인 함수입니다. 사용자 ID를 입력받아 등록 여부를 확인하고, 클릭을 전송합니다.
+ */
 async function main() {
   rl.question("클릭할 사용자 ID를 입력하세요: ", async (userId) => {
     if (!userId) {
