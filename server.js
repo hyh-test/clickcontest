@@ -1,45 +1,102 @@
-// server.js
-// 애플리케이션의 메인 진입점 파일입니다.
+// server.js (클러스터 안정성 강화)
 
-import { db } from './database.js';                     
+import cluster from 'node:cluster';
+import os from 'node:os';
+import { db } from './database.js';
 import { startHttpServer } from './httpserver.js';
 import { startTcpServer } from './tcpserver.js';
-import { startGame } from './gameLogic.js';
+import * as gameLogic from './gameLogic.js';
 
-console.log('애플리케이션 시작 중...');
+const numCPUs = os.cpus().length;
 
-// 1. 데이터베이스 초기화
-// 애플리케이션 시작 시 가장 먼저 데이터베이스를 설정합니다.
-try {
-  db.initDatabase(); 
-} catch (err) {
-  console.error('DB 초기화 실패:', err);
-  process.exit(1);
+if (cluster.isPrimary) {
+  /*********************************
+   * 마스터 프로세스 (매니저) 로직
+   *********************************/
+  console.log(`마스터 프로세스 (PID: ${process.pid}) 실행 중`);
+
+  try {
+    db.initDatabase();
+  } catch (err) {
+    console.error('마스터 DB 초기화 실패:', err);
+    process.exit(1);
+  }
+
+  gameLogic.startGame();
+  console.log('게임이 시작되었습니다.');
+
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork();
+  }
+
+  let readyWorkers = 0;
+  Object.values(cluster.workers).forEach(worker => {
+    worker.on('message', (msg) => {
+      switch (msg.type) {
+        case 'click': {
+          const clickTimestamp = process.hrtime.bigint();
+          const result = gameLogic.processClick(msg.userId, clickTimestamp);
+          worker.send({ type: 'clickResult', requestId: msg.requestId, success: result });
+          break;
+        }
+        case 'getWinner': {
+          const winner = gameLogic.getWinner();
+          worker.send({ type: 'winnerResult', requestId: msg.requestId, winner: winner });
+          break;
+        }
+        // ✅ 추가: 워커가 준비되었다는 메시지를 처리합니다.
+        case 'httpReady': {
+          readyWorkers++;
+          // 첫 워커가 준비되면, 테스트를 진행하기 위한 신호를 보냅니다.
+          if (readyWorkers === 1) {
+            console.log("모든 서버가 성공적으로 시작되었습니다.");
+          }
+          break;
+        }
+      }
+    });
+  });
+
+  // 안전한 종료(Graceful Shutdown) 로직
+  let isShuttingDown = false;
+  process.on('SIGINT', () => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+    console.log('SIGINT 신호 수신. 모든 워커를 종료합니다...');
+    for (const id in cluster.workers) {
+      cluster.workers[id].disconnect();
+    }
+  });
+
+  cluster.on('exit', (worker, code, signal) => {
+    if (isShuttingDown) {
+      if (Object.keys(cluster.workers).length === 0) {
+        console.log('모든 워커가 종료되었습니다. 마스터를 종료합니다.');
+        db.closeDatabase();
+        process.exit(0);
+      }
+    } else {
+      console.log(`${worker.process.pid}번 워커가 비정상 종료되었습니다. 새로운 워커를 생성합니다.`);
+      cluster.fork();
+    }
+  });
+
+} else {
+  /*********************************
+   * 워커 프로세스 (요리사) 로직
+   *********************************/
+  try {
+    db.initDatabase();
+  } catch (err) {
+    console.error(`워커 (PID: ${process.pid}) DB 초기화 실패:`, err);
+    process.exit(1);
+  }
+
+  startHttpServer();
+  startTcpServer();
+
+  process.on('disconnect', () => {
+    db.closeDatabase();
+    process.exit(0);
+  });
 }
-
-// 2. 게임 시작
-startGame();
-console.log('게임이 시작되었습니다.');
-
-// 3. HTTP 서버 시작
-startHttpServer();
-
-// 4. TCP 서버 시작
-startTcpServer();
-
-console.log('모든 서버가 성공적으로 시작되었습니다.');
-
-// 애플리케이션 종료 시 데이터베이스 연결을 안전하게 정리합니다。
-process.on('SIGINT', () => {
-  console.log('SIGINT 신호 수신. 서버 종료 중...');
-  db.closeDatabase(); // ✅ 수정된 코드
-  console.log('서버가 종료되었습니다.');
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  console.log('SIGTERM 신호 수신. 서버 종료 중...');
-  db.closeDatabase(); // ✅ 수정된 코드
-  console.log('서버가 종료되었습니다.');
-  process.exit(0);
-});
