@@ -1,4 +1,3 @@
-// database.js
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 
@@ -15,7 +14,6 @@ export const db = {
           address TEXT NOT NULL
         );
       `);
-                  console.log(`데이터베이스가 성공적으로 초기화되었습니다. (${dbPath})`);
     } catch (err) {
       console.error("데이터베이스 초기화 중 심각한 오류가 발생했습니다:", err);
       process.exit(1);
@@ -34,7 +32,6 @@ export const db = {
     return !!stmt.get(userId);
   },
 
-  // ✅ 추가: 특정 사용자의 정보를 조회하는 함수
   getUser(userId) {
     if (!dbInstance) throw new Error("데이터베이스가 초기화되지 않았습니다.");
     const stmt = dbInstance.prepare('SELECT userId, address FROM users WHERE userId = ?');

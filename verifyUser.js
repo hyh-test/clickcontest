@@ -1,12 +1,7 @@
-// verifyUser.js
-// Node.js 내장 node:sqlite 모듈을 사용하여 데이터베이스에서 사용자 존재 여부를 확인하는 스크립트입니다.
-
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import { exit } from 'node:process';
 
-// 명령줄 인자에서 userId를 가져옵니다.
-// node verifyUser.js <userId>
 const userIdToVerify = process.argv[2];
 
 if (!userIdToVerify) {

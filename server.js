@@ -1,5 +1,3 @@
-// server.js (클러스터 안정성 강화)
-
 import cluster from 'node:cluster';
 import os from 'node:os';
 import { db } from './database.js';
@@ -44,11 +42,9 @@ if (cluster.isPrimary) {
           worker.send({ type: 'winnerResult', requestId: msg.requestId, winner: winner });
           break;
         }
-        // ✅ 추가: 워커가 준비되었다는 메시지를 처리합니다.
         case 'httpReady': {
           readyWorkers++;
-          // 첫 워커가 준비되면, 테스트를 진행하기 위한 신호를 보냅니다.
-          if (readyWorkers === 1) {
+          if (readyWorkers === numCPUs) {
             console.log("모든 서버가 성공적으로 시작되었습니다.");
           }
           break;

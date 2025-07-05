@@ -43,7 +43,7 @@ export function initializeUser(userId) {
     joinTime: process.hrtime.bigint(),
     lastClickTime: process.hrtime.bigint(),
   });
-  console.log(`사용자 [${userId}] 게임에 초기화됨.`);
+  // console.log(`사용자 [${userId}] 게임에 초기화됨.`);
   return true;
 }
 
@@ -92,12 +92,6 @@ export function getWinner() {
   };
 }
 
-/**
- * 사용자 초기화와 클릭 등록을 한 번에 처리합니다. (클러스터용)
- * @param {string} userId - 사용자 ID
- * @param {bigint} timestamp - 클릭 발생 시각 (나노초)
- * @returns {boolean} 최종 클릭 등록 성공 여부
- */
 export function processClick(userId, timestamp) {
   if (!users.has(userId)) {
     const initSuccess = initializeUser(userId);

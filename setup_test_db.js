@@ -1,5 +1,4 @@
 
-// setup_test_db.js
 // 테스트를 위해 데이터베이스를 설정하고 테스트 사용자를 추가하는 스크립트
 
 import { db } from './database.js';

@@ -1,6 +1,3 @@
-// tcpClient.js
-// Node.js 내장 net, readline, path, sqlite 모듈을 사용하여 TCP 서버에 연결하는 클라이언트 스크립트입니다.
-
 import net from "node:net";
 import readline from "node:readline";
 import { DatabaseSync } from "node:sqlite";

@@ -61,6 +61,6 @@ export function startTcpServer() {
   });
 
   server.listen(TCP_PORT, () => {
-    // console.log(`TCP 워커 (PID: ${process.pid})가 ${TCP_PORT} 포트에서 실행 중`);
+    console.log(`TCP 워커 (PID: ${process.pid})가 ${TCP_PORT} 포트에서 실행 중`);
   });
 }
