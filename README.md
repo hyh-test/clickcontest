@@ -24,7 +24,7 @@ HTTP를 통한 회원가입, TCP를 통한 실시간 클릭 처리, 그리고 CP
 - **`tcpServer.js`**: 클라이언트의 클릭 요청을 받아 마스터 프로세스에 전달하는 TCP 서버 로직입니다.
 - **`gameLogic.test.js`**: `gameLogic.js`의 모든 규칙을 검증하는 단위 테스트 파일입니다.
 - **`e2e.test.js`**: 회원가입부터 우승자 확인까지 전체 흐름을 테스트하는 E2E 테스트 파일입니다.
-- **`tcpClient.js` & `verifyUser.js`**: 수동 테스트를 위한 유틸리티 스크립트입니다.
+- **`tcpClient.js`, `verifyUser.js`, `setup_test_db.js`**: 수동 테스트 및 개발 편의를 위한 유틸리티 스크립트입니다.
 
 ## ⚙️ 실행 환경
 
@@ -50,11 +50,10 @@ node --experimental-sqlite server.js
 ```text
 마스터 프로세스 (PID: 12345) 실행 중
 게임이 시작되었습니다.
-워커 프로세스 (PID: 12346) 시작됨
-HTTP 서버 실행 중: http://localhost:3000
-워커 프로세스 (PID: 12347) 시작됨
-HTTP 서버 실행 중: http://localhost:3000
+워커 12346 준비 완료. (1/16)
+워커 12347 준비 완료. (2/16)
 ... (CPU 코어 수만큼 반복) ...
+모든 서버가 성공적으로 시작되었습니다.
 ```
 
 ## 🧪 테스트 방법
@@ -96,20 +95,20 @@ Invoke-WebRequest -Uri http://localhost:3000/signup -Method POST -Headers @{"Con
 
 `verifyUser.js` 스크립트로 데이터베이스에 사용자가 있는지 확인합니다.
 
-```bash
+```powershell
 node --experimental-sqlite verifyUser.js manual_user
 ```
 
 - **예상 결과**: 
   ```text
-  사용자 [manual_user]가 데이터베이스에 존재합니다.
+  사용자 [manual_user]가 데이터베이스에 존재합니다. 주소: 0x1111222233334444555566667777888899990000
   ```
 
 #### ③ 클릭 시도
 
 `tcpClient.js` 스크립트로 클릭 이벤트를 서버에 전송합니다.
 
-```bash
+```powershell
 node tcpClient.js
 ```
 
@@ -151,4 +150,12 @@ Invoke-WebRequest -Uri http://localhost:3000/winner
 ### `GET /winner`
 
 - **설명**: 게임 종료 후 우승자 정보를 조회합니다.
+- **Response Body (성공 시)**:
+  ```json
+  {
+    "userId": "string",
+    "clickCount": "number",
+    "address": "string"
+  }
+  ```
 - **주요 응답 코드**: `200 OK`, `404 Not Found`
