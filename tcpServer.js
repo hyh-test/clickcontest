@@ -1,6 +1,7 @@
 // tcpServer.js
 // Node.js 내장 모듈인 net을 사용하여 TCP 서버를 구현합니다.
 import net from 'node:net';
+import { initializeUser, registerClick, _debugUsers } from './gameLogic.js';
 
 // TCP 서버 시작 함수를 export 합니다.
 export function startTcpServer() {
@@ -13,17 +14,49 @@ export function startTcpServer() {
 
     // 클라이언트로부터 데이터가 수신될 때
     socket.on('data', (data) => {
-      // TCP는 스트림 기반이므로, 데이터가 여러 번에 나눠 오거나 한 번에 올 수 있습니다.
-      // 여기서는 간단히 문자열로 변환하여 로그에 출력합니다.
-      // 실제 구현에서는 버퍼링 및 완전한 메시지 파싱 로직이 필요합니다.
-      const receivedData = data.toString().trim();
-      console.log(`클라이언트로부터 데이터 수신: ${receivedData}`);
+      const clickTimestamp = process.hrtime.bigint(); // 클릭 발생 시각을 서버에서 정확히 기록
+      let responseMessage = '';
 
-      // TODO: 받은 데이터를 gameLogic.js로 전달하여 클릭 처리 로직 구현
-      // 예: gameLogic.registerClick(userId, timestamp);
+      try {
+        // TCP는 스트림 기반이므로, 데이터가 여러 번에 나눠 오거나 한 번에 올 수 있습니다.
+        // 여기서는 간단히 JSON 문자열로 가정하고 파싱합니다.
+        const clickData = JSON.parse(data.toString().trim());
+        const userId = clickData.userId;
 
-      // 클라이언트에게 응답을 보낼 수 있습니다.
-      // socket.write('데이터 잘 받았습니다!');
+        if (!userId) {
+          responseMessage = 'ERROR: userId가 필요합니다.';
+          socket.write(responseMessage);
+          return;
+        }
+
+        // 사용자 초기화 (이미 초기화되었거나 실격된 경우 false 반환)
+        const userInitialized = initializeUser(userId);
+       if (!userInitialized && !_debugUsers().get(userId)?.disqualified) {
+          // 이미 초기화되었지만 실격되지 않은 경우 (재클릭)
+          // continue to registerClick
+        } else if (!userInitialized) {
+          // 초기화 실패 (예: 미등록 사용자 또는 이미 실격된 사용자)
+          responseMessage = `ERROR: 사용자 [${userId}]는 게임에 참여할 수 없습니다.`;
+          socket.write(responseMessage);
+          return;
+        }
+
+        // 클릭 등록 및 게임 규칙 적용
+        const clickRegistered = registerClick(userId, clickTimestamp);
+
+        if (clickRegistered) {
+          responseMessage = 'OK';
+        } else {
+          // 클릭이 등록되지 않은 경우 (예: 실격, 시간 초과 등)
+          responseMessage = 'ERROR: 클릭이 유효하지 않습니다.';
+        }
+
+      } catch (err) {
+        // JSON 파싱 오류 등
+        console.error('TCP 데이터 처리 오류:', err.message);
+        responseMessage = 'ERROR: 잘못된 데이터 형식.';
+      }
+      socket.write(responseMessage);
     });
 
     // 클라이언트 연결이 종료될 때
@@ -37,7 +70,7 @@ export function startTcpServer() {
     });
   });
 
-  // 서버가 특정 포트에서 리스닝을 시작합니다.
+  // 서버가 특정 포트에서 리스닝을 시작합니다。
   server.listen(TCP_PORT, () => {
     console.log(`TCP 클릭 서버 실행 중: 포트 ${TCP_PORT}`);
   });
@@ -49,3 +82,4 @@ export function startTcpServer() {
     // process.exit(1);
   });
 }
+
