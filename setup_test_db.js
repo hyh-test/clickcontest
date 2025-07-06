@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const DB_FILE = path.join(process.cwd(), 'clickgame.db');
 const TEST_USER_ID = 'verify_user';
-const TEST_USER_ADDRESS = '0xABCDEFG';
+const TEST_USER_ADDRESS = 'busan';
 
 try {
   /**
