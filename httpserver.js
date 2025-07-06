@@ -1,6 +1,7 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { db } from './database.js';
+import { HTTP_PORT } from './config.js';
 
 const pendingRequests = new Map();
 
@@ -90,8 +91,8 @@ const server = http.createServer((req, res) => {
  * @description HTTP 서버를 시작하고 지정된 포트에서 요청을 수신 대기합니다. 서버가 준비되면 마스터 프로세스에 메시지를 보냅니다.
  */
 export function startHttpServer() {
-  const PORT = 3000;
-  server.listen(PORT, () => {
+  
+  server.listen(HTTP_PORT, () => {
     //마스터에게 HTTP 서버가 준비되었음을 알립니다.
     if (process.send) {
       process.send({ type: 'httpReady' });

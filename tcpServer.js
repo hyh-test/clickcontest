@@ -2,6 +2,7 @@
 
 import net from 'node:net';
 import crypto from 'node:crypto';
+import { TCP_PORT } from './config.js';
 
 const pendingRequests = new Map();
 
@@ -33,7 +34,6 @@ process.on('message', (msg) => {
  *              클라이언트로부터 클릭 데이터를 받아 마스터 프로세스로 전달하고, 마스터의 응답을 클라이언트에 다시 보냅니다.
  */
 export function startTcpServer() {
-  const TCP_PORT = 3001;
 
   const server = net.createServer((socket) => {
     /**
